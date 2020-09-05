@@ -29,6 +29,8 @@ unset LD_PRELOAD
 export PATH=$bin:/usr/bin:/usr/sbin:/bin:$PATH
 export HOME=/root
 busybox mount -o bind /proc ${folder}/proc
+busybox mount -o bind /sys ${folder}/sys
+busybox mount -o bind /dev ${folder}/dev
 busybox chroot ${folder} /bin/bash
 if [ -n "\$(ls -A ubuntu-binds)" ]; then
     for f in ubuntu-binds/* ;do
