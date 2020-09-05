@@ -28,10 +28,11 @@ cd \$(dirname \$0)
 unset LD_PRELOAD
 export PATH=$bin:/usr/bin:/usr/sbin:/bin:$PATH
 export HOME=/root
-busybox mount -o bind /proc ${folder}/proc
-busybox mount -o bind /sys ${folder}/sys
-busybox mount -o bind /dev ${folder}/dev
-busybox chroot ${folder} /bin/bash
+rm -rf ubuntu-fs/dev
+ln -s /dev ubuntu-fs/dev
+rm -rf ubuntu-fs/sys
+ln -s /sys ubuntu-fs/sys
+busybox chroot ubuntu-fs /bin/bash
 if [ -n "\$(ls -A ubuntu-binds)" ]; then
     for f in ubuntu-binds/* ;do
       . \$f
