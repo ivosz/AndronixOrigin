@@ -13,27 +13,11 @@ tarball="void.tar.xz"
 if [ "$first" != 1 ];then
   if [ ! -f $tarball ]; then
     echo "Download Rootfs, this may take a while base on your internet speed."
-    case `dpkg --print-architecture` in
-    aarch64)
-      archurl="arm64" ;;
-    arm)
-      archurl="armhf" ;;
-    amd64)
-      archurl="amd64" ;;
-    x86_64)
-      archurl="amd64" ;;  
-    i*86)
-      archurl="i386" ;;
-    x86)
-      archurl="i386" ;;
-    *)
-      echo "unknown architecture"; exit 1 ;;
-    esac
-    wget "https://github.com/AndronixApp/AndronixOrigin/blob/master/Rootfs/Void/${archurl}/void_${archurl}.tar.xz?raw=true" -O $tarball
+    wget "https://github.com/AndronixApp/AndronixOrigin/blob/master/Rootfs/Void/i386/void_i386.tar.xz?raw=true" -O $tarball
   fi
   mkdir -p "$folder"
   echo "Decompressing Rootfs, please be patient."
-  proot --link2symlink tar -xJf ${tarball} -C $folder||:
+  tar -xJf ${tarball} -C $folder
 fi
 
 mkdir -p void-binds
@@ -44,41 +28,19 @@ cat > $bin <<- EOM
 cd \$(dirname \$0)
 ## unset LD_PRELOAD in case termux-exec is installed
 unset LD_PRELOAD
-command="proot"
-command+=" --link2symlink"
-command+=" -0"
-command+=" -r $folder"
 if [ -n "\$(ls -A void-binds)" ]; then
     for f in void-binds/* ;do
       . \$f
     done
 fi
-command+=" -b /dev"
-command+=" -b /proc"
-command+=" -b void-fs/root:/dev/shm"
-## uncomment the following line to have access to the home directory of termux
-#command+=" -b /data/data/com.termux/files/home:/root"
-## uncomment the following line to mount /sdcard directly to / 
-#command+=" -b /sdcard"
-command+=" -w /root"
-command+=" /usr/bin/env -i"
-command+=" HOME=/root"
-command+=" PATH=/usr/local/sbin:/usr/local/bin:/bin:/usr/bin:/sbin:/usr/sbin:/usr/games:/usr/local/games"
-command+=" TERM=\$TERM"
-command+=" LANG=C.UTF-8"
-command+=" /bin/bash --login"
-com="\$@"
-if [ -z "\$1" ];then
-    exec \$command
-else
-    \$command -c "\$com"
-fi
+export PATH=$bin:/usr/bin:/usr/sbin:/bin:$PATH
+export HOME=/root
+rm -rf void-fs/dev
+ln -s /dev void-fs/dev
+rm -rf void-fs/sys
+ln -s /sys void-fs/sys
+busybox chroot void-fs /bin/bash
 EOM
-
-echo "fixing shebang of $bin"
-termux-fix-shebang $bin
-
-
 
 echo "Fixing DNS for internet connection"
 rm -rf void-fs/etc/resolv.conf
